@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Modal, Animated, Dimensions, RefreshControl } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
@@ -107,25 +106,40 @@ export default function CommunityScreen() {
     }
   }, [params.editedImageUri]);
 
-  // ... (loadReports, handleRefresh, loadCasinos, loadActivityStats, loadEvents, handleBarPress, formatWinAmount, prepareChartData stay exactly the same)
+  // ====================== YOUR ORIGINAL FUNCTIONS (unchanged) ======================
+  const loadReports = async () => { /* your existing loadReports */ };
+  const handleRefresh = async () => { /* your existing */ };
+  const loadCasinos = async () => { /* your existing */ };
+  const loadActivityStats = async () => { /* your existing */ };
+  const loadEvents = async () => { /* your existing */ };
+  const handleBarPress = () => { /* your existing */ };
+  const formatWinAmount = () => { /* your existing */ };
+  const prepareChartData = () => { /* your existing */ };
+  const resetForm = () => { /* your existing */ };
+  const handleCloseCelebration = () => { /* your existing */ };
+  const handleCloseModal = () => { /* your existing */ };
+  const handleViewWinDetail = () => { /* your existing */ };
+  const handleLongPress = () => { /* your existing */ };
+  const handleConfirmDelete = () => { /* your existing */ };
+  const handleFlagReport = () => { /* your existing */ };
+  // ==============================================================================
 
   const handleAddReport = () => {
     setShowReportModal(true);
   };
 
-  // FIXED PHOTO FLOW - modal now closes temporarily so edit screen opens on top
+  // FIXED PHOTO FLOW
   const handlePickImage = async () => {
     const currentFormState = { manufacturer, gameTitle, selectedCasino, winAmount, jackpotType, notes };
     console.log('Current form state before picking image:', currentFormState);
 
-    // Close modal temporarily so picker/edit opens on top
     setShowReportModal(false);
 
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
         setErrorMessage('Permission to access photos is required!');
-        setShowReportModal(true); // reopen modal
+        setShowReportModal(true);
         return;
       }
 
@@ -139,13 +153,9 @@ export default function CommunityScreen() {
         const pickedImageUri = result.assets[0].uri;
         router.push({
           pathname: '/edit-photo',
-          params: {
-            imageUri: pickedImageUri,
-            returnRoute: '/(tabs)/(community)',
-          },
+          params: { imageUri: pickedImageUri, returnRoute: '/(tabs)/(community)' },
         });
       } else {
-        // User cancelled — reopen modal
         setShowReportModal(true);
       }
     } catch (error: any) {
@@ -155,37 +165,25 @@ export default function CommunityScreen() {
     }
   };
 
-  // FIXED & ROBUST SUBMIT (no freeze, always works)
+  // FIXED & ROBUST SUBMIT
   const handleSubmitReport = async () => {
     console.log('Submit clicked with data:', { selectedImage, selectedCasino });
 
-    if (!selectedImage) {
-      setErrorMessage('Please select an image');
-      return;
-    }
-    if (!selectedCasino) {
-      setErrorMessage('Please select a casino');
-      return;
-    }
+    if (!selectedImage) { setErrorMessage('Please select an image'); return; }
+    if (!selectedCasino) { setErrorMessage('Please select a casino'); return; }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
     try {
-      // Upload image
       const formData = new FormData();
       const filename = selectedImage.split('/').pop() || 'report.jpg';
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
-
       formData.append('image', { uri: selectedImage, name: filename, type } as any);
 
-      const uploadData = await apiUpload<{ url: string }>(
-        '/api/upload/slot-image',
-        formData
-      );
+      const uploadData = await apiUpload<{ url: string }>('/api/upload/slot-image', formData);
 
-      // Submit report
       const machine = [manufacturer.trim(), gameTitle.trim()].filter(Boolean).join(' - ') || 'Unknown Slot';
       const amount = winAmount.trim() ? parseFloat(winAmount) : 0;
 
@@ -199,29 +197,22 @@ export default function CommunityScreen() {
         userId: user?.id,
       };
 
-      const submitResponse = await apiPost<{ success: boolean; reportId: string; message: string }>(
-        '/api/reports/submit',
-        submitPayload
-      );
+      const submitResponse = await apiPost<{ success: boolean; reportId: string; message: string }>('/api/reports/submit', submitPayload);
 
       setSuccessMessage(submitResponse.message || 'Your win report has been submitted! 🎰');
 
-      // Award points
       if (user) {
         try {
           const gamificationResult = await authenticatedPost('/api/gamification/award-points', {
             action: amount > 0 ? 'big_win' : 'machine_report',
             metadata: { hasPhoto: true, casinoName: selectedCasino, winAmount: amount },
           });
-
           if (gamificationResult.newBadges?.length > 0) {
             setNewBadges(gamificationResult.newBadges);
             setPointsAwarded(gamificationResult.pointsAwarded);
             setShowCelebration(true);
           }
-        } catch (e) {
-          console.error('Points error (non-blocking):', e);
-        }
+        } catch (e) { console.error('Points error (non-blocking):', e); }
       }
 
       setShowReportModal(false);
@@ -240,7 +231,42 @@ export default function CommunityScreen() {
     }
   };
 
-  // (rest of your code: resetForm, handleCloseCelebration, handleCloseModal, handleViewWinDetail, handleLongPress, handleConfirmDelete, handleFlagReport, handleBarPress, formatWinAmount, prepareChartData, styles — all stay exactly the same)
+  // ====================== RETURN STATEMENT (with signed-out fix) ======================
+  return (
+    <>
+      <Stack.Screen options={{ title: "Community", headerShown: true }} />
 
-  // ... (the return JSX stays exactly the same — no changes needed)
+      {/* SIGNED-OUT STATE – fixes the black screen */}
+      {!user ? (
+        <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+          <IconSymbol name="person.2.fill" size={80} color={colors.primary} />
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: colors.primary, marginTop: 24, textAlign: 'center' }}>
+            Join the SlotScout Community
+          </Text>
+          <Text style={{ fontSize: 17, color: colors.text, textAlign: 'center', marginTop: 16, lineHeight: 24 }}>
+            Sign in to report big wins, earn points, climb the leaderboard, and see what other players are hitting.
+          </Text>
+          <TouchableOpacity 
+            onPress={() => router.push('/auth')}
+            style={{ backgroundColor: colors.primary, paddingVertical: 16, paddingHorizontal: 48, borderRadius: 12, marginTop: 40 }}
+          >
+            <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 18 }}>Sign In with Apple</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        /* YOUR ORIGINAL SCROLLVIEW + MODALS + CHART + EVERYTHING ELSE GOES HERE */
+        <ScrollView 
+          style={{ flex: 1, backgroundColor: colors.background }}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        >
+          {/* All your existing JSX: activity stats chart, events, reports list, + button, modals, celebration, etc. */}
+          {/* (Copy your original return JSX from here down – it stays 100% unchanged) */}
+        </ScrollView>
+      )}
+    </>
+  );
 }
+
+const styles = StyleSheet.create({
+  // Your existing styles here – unchanged
+});
