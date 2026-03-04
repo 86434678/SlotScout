@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "SlotScout",
+    "slug": "slotscout",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/app-icon-gen.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/app-icon-gen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.slotscout.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "SlotScout needs access to your camera to identify slot machines.",
+        "NSPhotoLibraryUsageDescription": "SlotScout needs access to your photo library to upload slot machine photos.",
+        "NSLocationWhenInUseUsageDescription": "Allow SlotScout to access location when taking photos? This auto-detects the casino to make reporting faster and improve community data."
+      }
+    },
+    "android": {
+      "package": "com.slotscout.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0A0A0A"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      "expo-camera",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SlotScout needs access to your photos to upload slot machine images."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow SlotScout to access location when taking photos? This auto-detects the casino to make reporting faster and improve community data."
+        }
+      ]
+    ],
+    "scheme": "slotscout",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "backendUrl": "https://f4tk78bgacgmfxq9b65yhpvdwnyypqe7.app.specular.dev"
+    }
+  }
+}
