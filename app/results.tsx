@@ -47,11 +47,11 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: 250,
+    height: 280,
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
-    backgroundColor: colors.card,
+    marginBottom: 24,
+    backgroundColor: '#000',
   },
   slotImage: {
     width: '100%',
@@ -186,7 +186,6 @@ export default function ResultsScreen() {
     setLoading(true);
 
     try {
-      // Load par sheet if we have a game title
       if (gameTitle) {
         try {
           const parSheets = await apiGet<ParSheet[]>('/api/par-sheets');
@@ -195,37 +194,25 @@ export default function ResultsScreen() {
               sheet.gameTitle.toLowerCase().includes(gameTitle.toLowerCase()) ||
               gameTitle.toLowerCase().includes(sheet.gameTitle.toLowerCase())
           );
-          if (matchingSheet) {
-            setParSheet(matchingSheet);
-            console.log('[Results] Par sheet found:', matchingSheet);
-          }
+          if (matchingSheet) setParSheet(matchingSheet);
         } catch (error) {
           console.error('[Results] Error loading par sheet:', error);
         }
       }
 
-      // Load NGCB stats
-      try {
-        const stats = await apiGet<NGCBStats[]>('/api/ngcb-stats');
-        if (stats.length > 0) {
-          // Get the most recent stats
-          setNgcbStats(stats[0]);
-          console.log('[Results] NGCB stats loaded');
-        }
-      } catch (error) {
-        console.error('[Results] Error loading NGCB stats:', error);
-      }
+      const stats = await apiGet<NGCBStats[]>('/api/ngcb-stats');
+      if (stats.length > 0) setNgcbStats(stats[0]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleReportWin = () => {
-    console.log('[Results] Opening community report');
+    if (!imageUri) return;
     router.push({
       pathname: '/(tabs)/(community)',
       params: {
-        prefilledImage: imageUri,
+        editedImageUri: imageUri,           // ← Fixed to match CommunityScreen
         prefilledManufacturer: manufacturer,
         prefilledGameTitle: gameTitle,
       },
@@ -233,32 +220,18 @@ export default function ResultsScreen() {
   };
 
   const handleTakeAnother = () => {
-    console.log('[Results] Taking another photo');
     router.back();
   };
 
   const renderHotTip = () => {
     if (!parSheet) return null;
-
     const avgRtp = (parSheet.rtpRangeLow + parSheet.rtpRangeHigh) / 2;
     const rtpText = `${avgRtp.toFixed(1)}%`;
     
-    let tipText = '';
-    if (avgRtp >= 96) {
-      tipText = `This machine has an excellent RTP range of ${parSheet.rtpRangeLow}%-${parSheet.rtpRangeHigh}%, which is above average for Vegas slots. `;
-    } else if (avgRtp >= 94) {
-      tipText = `This machine has a solid RTP range of ${parSheet.rtpRangeLow}%-${parSheet.rtpRangeHigh}%, which is competitive for Vegas. `;
-    } else {
-      tipText = `This machine has an RTP range of ${parSheet.rtpRangeLow}%-${parSheet.rtpRangeHigh}%. `;
-    }
-
-    if (parSheet.volatility === 'High') {
-      tipText += 'High volatility means bigger wins but less frequent. Best for players with larger bankrolls.';
-    } else if (parSheet.volatility === 'Medium') {
-      tipText += 'Medium volatility offers a balanced mix of win frequency and size.';
-    } else {
-      tipText += 'Low volatility means more frequent but smaller wins. Great for extended play sessions.';
-    }
+    let tipText = `This machine has an RTP range of ${parSheet.rtpRangeLow}%-${parSheet.rtpRangeHigh}%. `;
+    if (parSheet.volatility === 'High') tipText += 'High volatility means bigger wins but less frequent.';
+    else if (parSheet.volatility === 'Medium') tipText += 'Medium volatility offers balanced play.';
+    else tipText += 'Low volatility means more frequent but smaller wins.';
 
     return (
       <View style={styles.hotTipCard}>
@@ -268,7 +241,7 @@ export default function ResultsScreen() {
         </View>
         <Text style={styles.hotTipText}>{tipText}</Text>
         <View style={styles.rtpBadge}>
-          <Text style={styles.rtpBadgeText}>RTP: {rtpText}</Text>
+          <Text style={styles.rtpBadgeText}>Avg RTP: {rtpText}</Text>
         </View>
       </View>
     );
@@ -278,10 +251,12 @@ export default function ResultsScreen() {
     <>
       <View style={styles.container}>
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-          {/* Slot Image */}
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: imageUri }} style={styles.slotImage} resizeMode="cover" />
-          </View>
+          {/* PHOTO PREVIEW AT THE TOP - now more prominent */}
+          {imageUri && (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: imageUri }} style={styles.slotImage} resizeMode="cover" />
+            </View>
+          )}
 
           {/* Identification Results */}
           <View style={styles.card}>
@@ -332,9 +307,6 @@ export default function ResultsScreen() {
                 <Text style={styles.infoLabel}>Report Month</Text>
                 <Text style={styles.infoValue}>{ngcbStats.reportMonth}</Text>
               </View>
-              <Text style={styles.disclaimer}>
-                Data from Nevada Gaming Control Board public reports
-              </Text>
             </View>
           )}
 
@@ -348,7 +320,8 @@ export default function ResultsScreen() {
           </TouchableOpacity>
 
           <Text style={styles.disclaimer}>
-            All stats are public aggregates from NGCB reports or user-reported. Not a guarantee of future results. For entertainment only.
+            All stats are public aggregates from NGCB reports or user-reported. 
+            Not a guarantee of future results. For entertainment only.
           </Text>
         </ScrollView>
       </View>
